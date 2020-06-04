@@ -1,0 +1,1 @@
+python manage.py runserver --settings=datawiz.settings_dev 0.0.0.0:5000

@@ -38,3 +38,8 @@ body > .container {
 code {
   font-size: 80%;
 }
+
+
+.error-messages {
+  color: red;
+  font-size: 13px; }

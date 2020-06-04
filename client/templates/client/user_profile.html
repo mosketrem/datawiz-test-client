@@ -1,0 +1,67 @@
+{% extends "client/base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+  <div class="tab-pane active" id="profile">
+    <h5 class="mb-3">User Profile</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Name</h6>
+            <p>
+                {{ info.name }}
+            </p>
+        </div>
+        <div class="col-md-6">
+            <h6>Allowed Apps</h6>
+            {% for app in info.allowed_apps  %}
+              <a href="#" class="badge badge-dark badge-pill">{{ app }}</a>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <h6 class="mt-2"><span class="fa fa-clock-o ion-clock float-right"></span>Other Details</h6>
+            <table class="table table-sm table-hover table-striped">
+                <tbody>                                    
+                    <tr>
+                        <td>
+                            <strong>root_category:</strong> {{ info.root_category}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>show_day_before_stock:</strong> {{ info.show_day_before_stock}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>show_category_level:</strong> {{ info.show_category_level}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>max_category_level:</strong> {{ info.max_category_level}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>date_from:</strong> {{ info.date_from|date:"j E Y H:i"}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>date_to:</strong> {{ info.date_to|date:"j E Y H:i"}}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h6>Shops</h6>
+            {% for shop_id, shop_name in info.shops.items  %}
+              <a href="#" class="badge badge-dark badge-pill">{{ shop_name }}</a>
+            {% endfor %}
+        </div>
+    </div>
+  </div>
+
+{% endblock %}

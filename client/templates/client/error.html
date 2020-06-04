@@ -1,0 +1,9 @@
+{% extends "client/base.html" %}
+
+{% block title %}DataWiz | Error{% endblock %}
+
+{% block content %}
+    {% if error_msg %}
+        <p class="error-messages">{{ error_msg }}</p>
+    {% endif %}
+{% endblock %}
