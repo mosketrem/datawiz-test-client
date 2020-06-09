@@ -1,8 +1,33 @@
 {% extends "client/base.html" %}
 
+{% block content %}    
 
-{% block content %}
+    {% if table %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ table.0.0 }}</th>
+                    <th scope="col">{{ table.0.1 }}</th>
+                    <th scope="col">{{ table.0.2 }}</th>
+                    <th scope="col">{{ table.0.3 }}</th>
+                    <th scope="col">{{ table.0.4 }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in table|slice:"1:" %}
+                    <tr>
+                        <th scope="row">{{ line.0 }}</th>
+                        <td>{{ line.1 }}</td>
+                        <td>{{ line.2 }}</td>
+                        <td>{{ line.3 }}</td>
+                        <td>{{ line.4 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-<h1>This is client index.html</h1>
+    {% else %}
+        <p>Please <a href="{% url 'client:login' %}">login</a></p>
+{% endif %}
 
 {% endblock %}

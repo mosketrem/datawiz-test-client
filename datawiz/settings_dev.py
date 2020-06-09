@@ -136,4 +136,11 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 SESSION_COOKIE_AGE = 60 * 60 * 24  # a session cookie lives for 1 day
 
+CACHES = {
+   'default': {
+      'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+      'LOCATION': 'cache_table',
+   }
+}
+
 django_heroku.settings(locals())

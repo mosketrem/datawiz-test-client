@@ -25,7 +25,7 @@
         </fieldset>
         <div class="form-group">
         <button class="btn btn-outline" type="submit" value="Login">Login</button>
-        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="next" value="{% firstof next '/' %}">
             </div>
     </form>
 </div>
