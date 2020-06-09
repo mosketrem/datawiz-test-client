@@ -135,11 +135,14 @@ STATIC_URL = '/static/'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 SESSION_COOKIE_AGE = 60 * 60 * 24  # a session cookie lives for 1 day
+CACHE_AGE = 60 * 15  # 15 minutes
+
+CACHE_TABLE = 'cache_table'
 
 CACHES = {
    'default': {
       'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-      'LOCATION': 'cache_table',
+      'LOCATION': CACHE_TABLE,
    }
 }
 
