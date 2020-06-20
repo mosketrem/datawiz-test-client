@@ -2,6 +2,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.core.cache import cache
 from django.urls import reverse
+from django.conf import settings
 
 import pandas as pd
 from dwapi import datawiz_auth, datawiz
@@ -73,72 +74,29 @@ def if_creds_valid(view_func):
 @if_creds_valid
 def index(request, dw):
     context = {}
-    # get month sales report made by categories
-    df = dw.get_categories_sale()
-    df.sort_values(by=['date'], inplace=True, ascending=True)
-    # taking last two days
-    df = df[-2:]
-    df['sum'] = df[list(df.columns)].sum(axis=1)
-    first_line = ['Показник', df.iloc[[1]].index.values[0], df.iloc[[0]].index.values[0], 'Різниця, %', 'Різниця']
-    # calculate amounts of operated money
-    a1, a0 = df.iloc[[1]]['sum'].values[0], df.iloc[[0]]['sum'].values[0]
-    second_line = ['Обсяг задіяних коштів', '{:.2f}'.format(a1), '{:.2f}'.format(a0), '{:.2f}'.format((a1 - a0) / a0 * 100.0), '{:.2f}'.format(a1 - a0)]
+    if not cache.get('tables', {}).get('main_table'):
+        # get month sales report made by categories
+        df = dw.get_categories_sale()
+        df.sort_values(by=['date'], inplace=True, ascending=True)
+        # taking last two days
+        df = df[-2:]
+        df['sum'] = df[list(df.columns)].sum(axis=1)
+        first_line = ['Показник', df.iloc[[1]].index.values[0], df.iloc[[0]].index.values[0], 'Різниця, %', 'Різниця']
+        # calculate amounts of operated money
+        a1, a0 = df.iloc[[1]]['sum'].values[0], df.iloc[[0]]['sum'].values[0]
+        second_line = ['Обсяг задіяних коштів', '{:.2f}'.format(a1), '{:.2f}'.format(a0), '{:.2f}'.format((a1 - a0) / a0 * 100.0), '{:.2f}'.format(a1 - a0)]
 
-    # fentching detailed sales info
-    items = [i for i in dw.sale_items()]
-    df = pd.DataFrame(columns=items[0][0].keys())
-    for i in items:
-        df = df.append(pd.DataFrame(i))
-    # adding simple date column
-    df['day'] = df['date'].apply(lambda x: x[:10])
-    days = df.day.unique()
-    days.sort()
-    # filtering sales of two last days
-    last_day = df.loc[df['day'] == days[-1]]
-    before_last_day = df.loc[df['day'] == days[-2]]
+        # the data for the template
+        main_table = [first_line, second_line, ] #third_line, forth_line, fifth_line]
 
-    # adding up amount of sold goods
-    qty1, qty0 = last_day.qty.sum(), before_last_day.qty.sum()
-    diff = qty1 - qty0
-    third_line = ['Кількість проданого', '{:.2f}'.format(qty1), '{:.2f}'.format(qty0), '{:.2f}'.format(diff / qty0 * 100.0), '{:.2f}'.format(diff)]
-    # getting amount of receipts for each of last two days
-    receipts1, receipts0 = len(last_day.receipt_id.unique()), len(before_last_day.receipt_id.unique())
-    forth_line = ['Кількість чеків', receipts1, receipts0, '{:.2f}'.format((receipts1 - receipts0) / receipts0 * 100.0), receipts1 - receipts0]
+        new_cache = cache.get('tables', {})
+        new_cache.update({'main_table': main_table})
+        cache.set('tables', new_cache, settings.CACHE_AGE)
+    else:
+        main_table = cache.get('tables')['main_table']
 
-    # calculating the mean value of an average receipt
-    mean1, mean0 = last_day.groupby('receipt_id')['total_price'].sum().mean(), before_last_day.groupby('receipt_id')['total_price'].sum().mean()
-    fifth_line = ['Середній чек', '{:.2f}'.format(mean1), '{:.2f}'.format(mean0), '{:.2f}'.format((mean1 - mean0) / mean0 * 100.0), '{:.2f}'.format(mean1 - mean0)]
-
-    # the data for the template
-    main_table = [first_line, second_line, third_line, forth_line, fifth_line]
-
-    # fetching descriptions of goods (because sales info has only id-s, and we need names)
-    products = dw.get_product()
-    products = {i['identifier']: i['product_name'] for i in products}
-
-    # calculating money per product's id (for each of two last days)
-    sales_per_product1 = last_day.groupby('product_id')[['qty', 'total_price']].sum()
-    sales_per_product0 = before_last_day.groupby('product_id')[['qty', 'total_price']].sum()
-    diff = sales_per_product1.subtract(sales_per_product0, fill_value=0).sort_values('total_price')
-    increase, drop = diff[-5:][::-1], diff[:5]
-
-    # the data for the template
-    first_line = ['Назва краму', 'Зміна кількості продажів', 'Зміна задіяних коштів']
-    increase_table = [first_line,]
-    
-    form_row = lambda x, i: [products[x.index[i]], x.values[i][0], '{:.2f}'.format(x.values[i][1])]
-
-    for i in range(len(increase)):
-        increase_table.append(form_row(increase, i))
-
-    # the data for the template
-    drop_table = [first_line,]
-    for i in range(len(drop)):
-        drop_table.append(form_row(drop, i))
-
-    context = {'main_table': main_table,
-                'increase_table': increase_table,
-                'drop_table': drop_table
+    context = {
+        'main_table': main_table,
     }
 
     return render(request, 'client/index.html', context)
@@ -148,3 +106,78 @@ def index(request, dw):
 def profile(request, dw):    
     info = dw.get_client_info()
     return render(request, 'client/user_profile.html', {'info': info})
+
+
+@if_creds_valid
+def changes(request, dw):
+    tables = cache.get('tables')
+    if not tables.get('increase_table') or not tables.get('drop_table'):
+        # fentching detailed sales info
+        items = [i for i in dw.sale_items()]
+        df = pd.DataFrame(columns=items[0][0].keys())
+        for i in items:
+            df = df.append(pd.DataFrame(i))
+        # adding simple date column
+        df['day'] = df['date'].apply(lambda x: x[:10])
+        days = df.day.unique()
+        days.sort()
+        # filtering sales of two last days
+        last_day = df.loc[df['day'] == days[-1]]
+        before_last_day = df.loc[df['day'] == days[-2]]
+
+        main_table = tables.get('main_table')
+        if main_table and len(main_table) < 3:
+            # adding up amount of sold goods
+            qty1, qty0 = last_day.qty.sum(), before_last_day.qty.sum()
+            diff = qty1 - qty0
+            third_line = ['Кількість проданого', '{:.2f}'.format(qty1), '{:.2f}'.format(qty0), '{:.2f}'.format(diff / qty0 * 100.0), '{:.2f}'.format(diff)]
+            # getting amount of receipts for each of last two days
+            receipts1, receipts0 = len(last_day.receipt_id.unique()), len(before_last_day.receipt_id.unique())
+            forth_line = ['Кількість чеків', receipts1, receipts0, '{:.2f}'.format((receipts1 - receipts0) / receipts0 * 100.0), receipts1 - receipts0]
+
+            # calculating the mean value of an average receipt
+            mean1, mean0 = last_day.groupby('receipt_id')['total_price'].sum().mean(), before_last_day.groupby('receipt_id')['total_price'].sum().mean()
+            fifth_line = ['Середній чек', '{:.2f}'.format(mean1), '{:.2f}'.format(mean0), '{:.2f}'.format((mean1 - mean0) / mean0 * 100.0), '{:.2f}'.format(mean1 - mean0)]
+
+            main_table.extend([third_line, forth_line, fifth_line])
+
+        # fetching descriptions of goods (because sales info has only id-s, and we need names)
+        products = dw.get_product()
+        products = {i['identifier']: i['product_name'] for i in products}
+
+        # calculating money per product's id (for each of two last days)
+        sales_per_product1 = last_day.groupby('product_id')[['qty', 'total_price']].sum()
+        sales_per_product0 = before_last_day.groupby('product_id')[['qty', 'total_price']].sum()
+        diff = sales_per_product1.subtract(sales_per_product0, fill_value=0).sort_values('total_price')
+        increase, drop = diff[-5:][::-1], diff[:5]
+
+        # the data for the template
+        first_line = ['Назва краму', 'Зміна кількості продажів', 'Зміна задіяних коштів']
+        increase_table = [first_line,]
+        
+        form_row = lambda x, i: [products[x.index[i]], x.values[i][0], '{:.2f}'.format(x.values[i][1])]
+
+        for i in range(len(increase)):
+            increase_table.append(form_row(increase, i))
+
+        # the data for the template
+        drop_table = [first_line,]
+        for i in range(len(drop)):
+            drop_table.append(form_row(drop, i))
+
+        cache.set('tables', {
+            'increase_table': increase_table,
+            'drop_table': drop_table,
+            'main_table': main_table
+        }, settings.CACHE_AGE)
+    else:
+        increase_table = tables['increase_table']
+        drop_table = tables['drop_table']
+        main_table = tables.get('main_table')
+
+    context = {
+        'increase_table': increase_table,
+        'drop_table': drop_table,
+        'main_table': main_table,
+    }
+    return render(request, 'client/ajax_parts/changes_tables.html', context)

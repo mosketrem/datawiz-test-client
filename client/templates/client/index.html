@@ -1,79 +1,37 @@
 {% extends "client/base.html" %}
 
+{% load static %}
+
 {% block content %}    
 
     {% if main_table %}
         <div class="container">
+            <h3 class="text-center">Основні показники</h3>
             <div class="row">
-                <h3 class="text-justify">Основні показники</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">{{ main_table.0.0 }}</th>
-                            <th scope="col">{{ main_table.0.1 }}</th>
-                            <th scope="col">{{ main_table.0.2 }}</th>
-                            <th scope="col">{{ main_table.0.3 }}</th>
-                            <th scope="col">{{ main_table.0.4 }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for line in main_table|slice:"1:" %}
-                            <tr>
-                                <th scope="row">{{ line.0 }}</th>
-                                <td>{{ line.1 }}</td>
-                                <td>{{ line.2 }}</td>
-                                <td>{{ line.3 }}</td>
-                                <td>{{ line.4 }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="col-sm">
+                    <div id="main-table" class="row">{% include "client/ajax_parts/main_table.html" with main_table=main_table %}</div>
+                </div>
+            </div>
+            <div class="load-changes" class="row">
+                <img src="{% static 'images/ajax-loader.gif' %}" alt="Loading..."/>
             </div>
         </div>
         <div class="container">
             <div class="row">
                 <div class="col-sm">
-                    <h3 class="text-justify">Товари, продаж яких зріс</h3>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ increase_table.0.0 }}</th>
-                                <th scope="col">{{ increase_table.0.1 }}</th>
-                                <th scope="col">{{ increase_table.0.2 }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for line in increase_table|slice:"1:" %}
-                                <tr>
-                                    <th scope="row">{{ line.0 }}</th>
-                                    <td>{{ line.1 }}</td>
-                                    <td>{{ line.2 }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <h3 class="text-center">Товари, продаж яких зріс</h3>
+                    <div class="load-changes">
+                        <img src="{% static 'images/ajax-loader.gif' %}" alt="Loading..."/>
+                    </div>
+                    <div id="increase-table"></div>
                 </div>
                 <div class="col-sm">
-                        <h3 class="text-justify">Товари, продаж яких упав</h3>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">{{ drop_table.0.0 }}</th>
-                                    <th scope="col">{{ drop_table.0.1 }}</th>
-                                    <th scope="col">{{ drop_table.0.2 }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for line in drop_table|slice:"1:" %}
-                                    <tr>
-                                        <th scope="row">{{ line.0 }}</th>
-                                        <td>{{ line.1 }}</td>
-                                        <td>{{ line.2 }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <h3 class="text-center">Товари, продаж яких упав</h3>
+                    <div class="load-changes">
+                        <img src="{% static 'images/ajax-loader.gif' %}" alt="Loading..."/>
                     </div>
+                    <div id="drop-table"></div>
+                </div>
             </div>
         </div>
 
@@ -81,4 +39,8 @@
         <p>Please <a href="{% url 'client:login' %}">login</a></p>
 {% endif %}
 
+{% endblock %}
+
+{% block additional_script %}
+    <script src="{% static 'js/script.js' %}"></script>
 {% endblock %}

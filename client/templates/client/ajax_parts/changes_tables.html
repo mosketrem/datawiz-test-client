@@ -1,0 +1,40 @@
+<div>
+    {% include "client/ajax_parts/main_table.html" with main_table=main_table %}
+<table class="table" id="increase-table">
+    <thead>
+        <tr>
+            <th scope="col">{{ increase_table.0.0 }}</th>
+            <th scope="col">{{ increase_table.0.1 }}</th>
+            <th scope="col">{{ increase_table.0.2 }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in increase_table|slice:"1:" %}
+            <tr>
+                <th scope="row">{{ line.0 }}</th>
+                <td>{{ line.1 }}</td>
+                <td>{{ line.2 }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<table class="table" id="drop-table">
+    <thead>
+        <tr>
+            <th scope="col">{{ drop_table.0.0 }}</th>
+            <th scope="col">{{ drop_table.0.1 }}</th>
+            <th scope="col">{{ drop_table.0.2 }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in drop_table|slice:"1:" %}
+            <tr>
+                <th scope="row">{{ line.0 }}</th>
+                <td>{{ line.1 }}</td>
+                <td>{{ line.2 }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
