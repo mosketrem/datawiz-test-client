@@ -4,7 +4,7 @@ django-crispy-forms
 django-heroku==0.3.1
 psycopg2-binary
 pytz==2020.1
-sqlparse==0.3.1
+sqlparse==0.4.4
 whitenoise==5.1.0
 gunicorn
 git+https://github.com/datawizio/pythonAPI.git
